@@ -42,24 +42,42 @@ update_config(cfg, args)
 
 
 
-model = get_model('vgg19')     
+model = get_model('vgg19')
 model.load_state_dict(torch.load(args.weight))
 model = torch.nn.DataParallel(model).cuda()
 model.float()
 model.eval()
 
-test_image = './readme/ski.jpg'
-oriImg = cv2.imread(test_image) # B,G,R order
-shape_dst = np.min(oriImg.shape[0:2])
+import argparse
+from vision_utils.timing import CodeTimer
+import glob
 
-# Get results of original image
+parser = argparse.ArgumentParser(description='Directory of PNG images to use for inference.')
+parser.add_argument('--input_dir',
+                    default="/home/slave/Pictures/pose/pose test input",
+                    help='directory of PNG images to run fastpose on')
 
-with torch.no_grad():
-    paf, heatmap, im_scale = get_outputs(oriImg, model,  'rtpose')
-          
-print(im_scale)
-humans = paf_to_pose_cpp(heatmap, paf, cfg)
-        
-out = draw_humans(oriImg, humans)
-cv2.imwrite('result.png',out)   
+args = parser.parse_args()
+times = []
 
+for test_image in glob.glob(f"{args.input_dir}/*.png"):
+    img_name = test_image.split("/")[-1]
+
+    oriImg = cv2.imread(test_image) # B,G,R order
+    shape_dst = np.min(oriImg.shape[0:2])
+
+    # Get results of original image
+
+    with CodeTimer() as timer:
+        with torch.no_grad():
+            paf, heatmap, im_scale = get_outputs(oriImg, model,  'rtpose')
+
+        print(im_scale)
+        humans = paf_to_pose_cpp(heatmap, paf, cfg)
+    print(img_name, timer.took)
+    times.append(timer.took)
+
+    out = draw_humans(oriImg, humans)
+    cv2.imwrite(img_name,out)
+
+print(np.mean(times))
