@@ -379,6 +379,7 @@ def paf_to_pose_cpp(heatmaps, pafs, config):
 
     if joint_list.shape[0] > 0:
         joint_list = np.expand_dims(joint_list, 0)
+        # print(joint_list)
         paf_upsamp = cv2.resize(
             pafs, None, fx=config.MODEL.DOWNSAMPLE, fy=config.MODEL.DOWNSAMPLE, interpolation=cv2.INTER_NEAREST)
         heatmap_upsamp = cv2.resize(

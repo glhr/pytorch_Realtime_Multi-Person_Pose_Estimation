@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import re
 import sys
@@ -59,11 +60,14 @@ parser.add_argument('--input_dir',
 
 args = parser.parse_args()
 times = []
+scale=0.5
 
 for test_image in glob.glob(f"{args.input_dir}/*.png"):
-    img_name = test_image.split("/")[-1]
+    img_name = f'{test_image.split("/")[-1].split(".")[-2]}-{scale}.{test_image.split(".")[-1]}' if scale<1 else test_image.split("/")[-1]
 
     oriImg = cv2.imread(test_image) # B,G,R order
+    dim = (int(oriImg.shape[1] * scale), int(oriImg.shape[0] * scale))
+    oriImg = cv2.resize(oriImg, dim)
     shape_dst = np.min(oriImg.shape[0:2])
 
     # Get results of original image
@@ -74,6 +78,7 @@ for test_image in glob.glob(f"{args.input_dir}/*.png"):
 
         print(im_scale)
         humans = paf_to_pose_cpp(heatmap, paf, cfg)
+        # print(humans)
     print(img_name, timer.took)
     times.append(timer.took)
 
