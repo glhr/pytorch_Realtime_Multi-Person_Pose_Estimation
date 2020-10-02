@@ -41,11 +41,11 @@ args = parser.parse_args()
 # update config file
 update_config(cfg, args)
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = get_model('vgg19')
 model.load_state_dict(torch.load(args.weight))
-model = torch.nn.DataParallel(model).cuda()
+model = torch.nn.DataParallel(model).to(device)
 model.float()
 model.eval()
 
@@ -55,7 +55,7 @@ import glob
 
 parser = argparse.ArgumentParser(description='Directory of PNG images to use for inference.')
 parser.add_argument('--input_dir',
-                    default="/home/slave/Pictures/pose/pose test input",
+                    default="/home/robotlab/pose test input",
                     help='directory of PNG images to run fastpose on')
 
 args = parser.parse_args()
