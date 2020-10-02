@@ -51,7 +51,11 @@ model.eval()
 
 import argparse
 from vision_utils.timing import CodeTimer
+from vision_utils.logger import get_logger
 import glob
+import json
+
+logger=get_logger()
 
 parser = argparse.ArgumentParser(description='Directory of PNG images to use for inference.')
 parser.add_argument('--input_dir',
@@ -60,7 +64,7 @@ parser.add_argument('--input_dir',
 
 args = parser.parse_args()
 times = []
-scale=0.5
+scale=1
 
 for test_image in glob.glob(f"{args.input_dir}/*.png"):
     img_name = f'{test_image.split("/")[-1].split(".")[-2]}-{scale}.{test_image.split(".")[-1]}' if scale<1 else test_image.split("/")[-1]
@@ -78,9 +82,32 @@ for test_image in glob.glob(f"{args.input_dir}/*.png"):
 
         print(im_scale)
         humans = paf_to_pose_cpp(heatmap, paf, cfg)
-        # print(humans)
+
     print(img_name, timer.took)
     times.append(timer.took)
+
+
+    logger.debug(humans)
+    image_h, image_w = oriImg.shape[:2]
+    centers = {}
+    json_out = []
+    for human in humans:
+        # draw point
+        keypoints = []
+        for i in range(CocoPart.Background.value):
+            if i not in human.body_parts.keys():
+                continue
+
+            body_part = human.body_parts[i]
+            center = (int(body_part.x * image_w + 0.5), int(body_part.y * image_h + 0.5))
+            centers[i] = center
+            keypoints.extend([center[0],center[1],body_part.score])
+        logger.debug(keypoints)
+        json_out.append({'keypoints':keypoints})
+    json_out_name = '../eval/pytorch_Realtime_Multi-Person_Pose_Estimation/' + img_name + '.predictions.json'
+    with open(json_out_name, 'w') as f:
+        json.dump(json_out, f)
+    logger.info(json_out_name)
 
     out = draw_humans(oriImg, humans)
     cv2.imwrite(img_name,out)
