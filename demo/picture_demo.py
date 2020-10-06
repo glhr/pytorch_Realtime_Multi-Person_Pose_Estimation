@@ -96,6 +96,7 @@ for test_image in glob.glob(f"{args.input_dir}/*.png"):
         keypoints = []
         for i in range(CocoPart.Background.value):
             if i not in human.body_parts.keys():
+                keypoints.extend([0,0,0])
                 continue
 
             body_part = human.body_parts[i]
