@@ -59,12 +59,12 @@ logger=get_logger()
 
 parser = argparse.ArgumentParser(description='Directory of PNG images to use for inference.')
 parser.add_argument('--input_dir',
-                    default="/home/robotlab/pose test input",
+                    default="/home/slave/Pictures/pose/pose test input",
                     help='directory of PNG images to run fastpose on')
 
 args = parser.parse_args()
 times = []
-scale=1
+scale=0.5
 
 for test_image in glob.glob(f"{args.input_dir}/*.png"):
     img_name = f'{test_image.split("/")[-1].split(".")[-2]}-{scale}.{test_image.split(".")[-1]}' if scale<1 else test_image.split("/")[-1]
